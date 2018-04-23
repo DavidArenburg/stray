@@ -17,10 +17,7 @@
 #' @importFrom HDoutliers getHDmembers
 #' @importFrom FactoMineR MCA
 #' @importFrom gridExtra grid.arrange
-#' @importFrom dplyr bind_rows
 #' @importFrom FNN knn.dist
-#' @importFrom purrr flatten
-#' @import tibble
 #' @import ggplot2
 #' @import stats
 #' @references {Wilkinson, L. (2018), `Visualizing big data
@@ -37,64 +34,86 @@
 #' set.seed(1234)
 #' n <- 1000 # number of observations
 #' nout <- 10 # number of outliers
-#' typical_data <- tibble::as.tibble(matrix(rnorm(2*n), ncol = 2, byrow = TRUE))
-#' out <- tibble::as.tibble(matrix(5*runif(2*nout,min=-5,max=5), ncol = 2, byrow = TRUE))
-#' data <- dplyr::bind_rows(out, typical_data )
+#' typical_data <- as.data.frame(matrix(rnorm(2*n), ncol = 2, byrow = TRUE))
+#' out <- as.data.frame(matrix(5*runif(2*nout,min=-5,max=5), ncol = 2, byrow = TRUE))
+#' data <- rbind(out, typical_data )
 #' outliers <- find_HDoutliers(data)
 #' display_HDoutliers(data, outliers)
+
 find_HDoutliers <- function(data, maxrows = 1000, alpha = 0.01){
-standardize <- function(z) {(z-median(z))/IQR(z)}
-data <- as.matrix(data)
-zdata <- apply(data, 2, standardize)
-members <- get_leader_clusters(zdata, maxrows = maxrows)
+  
+   standardize <- function(z) (z - median(z)) / IQR(z)
+  
+   data <- as.matrix(data)
+   zdata <- apply(data, 2, standardize)
+  
+   members <- get_leader_clusters(zdata, maxrows = maxrows)
 
-if(length(members)==1){
-  out = NULL
-} else {
-  break_list<-function(x){
-    max <- floor(nrow(data) / 20)
-    seq <- seq_along(x)
-    split(x, ceiling(seq/max))
-  }
-
-  members<- lapply(members, break_list)
-  members<- purrr::flatten(members)
-  exemplars <- sapply(members, function(x) x[[1]])
-  names(members) <- exemplars
-
-
-  k <- ceiling(length(exemplars)/ 20)
-  if(k==1){
-    d <- as.vector(FNN::knn.dist(zdata[exemplars, ], 1 ))
-  } else{
-    d_knn <- FNN::knn.dist(zdata[exemplars, ], k )
-    d_knn1 <-cbind(rep(0, nrow(d_knn)), d_knn)
-    diff <- t(apply(d_knn1, 1, diff))
-    max_diff <- apply(diff, 1, which.max)
-    d <- d_knn[cbind(1:nrow(d_knn), max_diff)]
-  }
-  n <- length(d)
-  ord <- order(d)
-  gaps <- c(0, diff(d[ord]))
-  n4 <- max(min(50, floor(n/4)), 2)
-  J <- 2:n4
-  start <- max(floor(n/2), 1) + 1
-  ghat <- numeric(n)
-  for (i in start:n) ghat[i] <- sum((J/(n4-1)) * gaps[i - J+1 ]) # check i - j +1
-  logAlpha <- log(1/alpha)
-  bound <- Inf
-
-  for (i in start:n) {
-    if (gaps[i] > logAlpha * ghat[i]) {
-      bound <- d[ord][i - 1]
-      break
+   if(length(members) == 1){
+    
+     out = NULL
+    
+    } else {
+    
+     break_list<-function(x){
+       
+       max <- floor(nrow(data) / 20)
+       seq <- seq_along(x)
+       split(x, ceiling(seq / max))
+      
     }
+
+    members <- lapply(members, break_list)
+    #members<- purrr::flatten(members)
+    members <- unlist(members, recursive = FALSE, use.names = FALSE)
+    #exemplars <- sapply(members, function(x) x[[1]])
+    exemplars <- sapply(members, `[[` , 1)
+    names(members) <- exemplars
+
+
+    k <- ceiling(length(exemplars) / 20)
+    if(k == 1){
+      
+      d <- as.vector(FNN::knn.dist(zdata[exemplars, ], 1))
+      
+    } else {
+      
+      d_knn <- FNN::knn.dist(zdata[exemplars, ], k)
+      #d_knn1 <-cbind(rep(0, nrow(d_knn)), d_knn)
+      #diff <- t(apply(d_knn1, 1, diff))
+      diffs <- cbind(d_knn[, 1], d_knn[, -1] - d_knn[, -ncol(d_knn)])
+      #max_diff <- apply(diff, 1, which.max)
+      max_diff <- max.col(diffs, ties.method = "first")
+      d <- d_knn[cbind(1:nrow(d_knn), max_diff)]
+      
+    }
+    n <- length(d)
+    ord <- order(d)
+    gaps <- c(0, diff(d[ord]))
+    n4 <- max(min(50, floor(n/4)), 2)
+    J <- 2:n4
+    start <- max(floor(n/2), 1) + 1
+    ghat <- numeric(n)
+     
+    # This could be probably vectorized but it can get out of memory error
+    for (i in start:n) ghat[i] <- sum((J/(n4-1)) * gaps[i - J+1 ]) # check i - j +1
+    logAlpha <- log(1/alpha)
+    bound <- Inf
+
+    #for (i in start:n) {
+    #  if (gaps[i] > logAlpha * ghat[i]) {
+    #    bound <- d[ord][i - 1]
+    #    break
+    #  }
+    #}
+    i <- which(gaps[-1] > logAlpha * ghat[-1])[1]
+    if(!is.na(i)) bound <- d[ord][i]
+     
+    ex <- exemplars[which(d > bound)]
+    out <- unlist(members[match(ex, exemplars)])
+    names(out) <- NULL
   }
-  ex <- exemplars[which(d > bound)]
-  out <- unlist(members[match(ex, exemplars)])
-  names(out) <- NULL
-}
-return(out)
+  return(out)
 }
 
 
@@ -115,6 +134,8 @@ return(out)
 #' @references {Hartigan, John A. "Clustering algorithms." (1975).}
 #' @references {Kantardzic, Mehmed. Data mining: concepts, models, methods, and algorithms.
 #'  John Wiley & Sons, 2011.}
+
+## This thing needs vectorization desperately, but probably next time
 get_leader_clusters <- function( data, maxrows = 1000)
 {
 
@@ -155,7 +176,8 @@ get_leader_clusters <- function( data, maxrows = 1000)
     }
   }
   members <- members[!sapply(members, is.null)]
-  exemplars <- sapply(members, function(x) x[[1]])
+  #exemplars <- sapply(members, function(x) x[[1]])
+  exemplars <- sapply(members, `[[`, 1)
   names(members) <- exemplars
   members
 }
