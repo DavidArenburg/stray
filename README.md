@@ -1,7 +1,7 @@
 # This is a light-weight fork, without (most of the) dependencies and (most of the) loops for easy installation and quick and dirty testing
 
 ### Installation (not really testes so far)
-```r devtools::install_github("DavidArenburg/stray")`
+`devtools::install_github("DavidArenburg/stray")`
 
 
 ---
