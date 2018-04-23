@@ -105,7 +105,7 @@ find_HDoutliers <- function(data, maxrows = 1000, alpha = 0.01){
     #    break
     #  }
     #}
-    i <- which(gaps[-1] > logAlpha * ghat[-1])[1]
+    i <- which(gaps[start:n] > logAlpha * ghat[start:n])[1]
     if(!is.na(i)) bound <- d[ord][i]
      
     ex <- exemplars[which(d > bound)]
