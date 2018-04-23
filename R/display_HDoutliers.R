@@ -22,16 +22,15 @@
 
 display_HDoutliers <- function(data, outliers) {
   data <- as.data.frame(data)
-  #d <- ncol(data)
-  #n <- nrow(data)
+  d <- ncol(data)
+  n <- nrow(data)
   #outcon <- as.factor(ifelse(1:n %in% outliers,
   #                           "outlier", "non_outlier"))
   #data <-dplyr::mutate(data, outcon)
-  dims <- dim(data)
-  data$outcon <- as.factor(c("non_outlier", "outlier")[(seq_len(dims[1L]) %in% outliers) + 1])
+  data$outcon <- as.factor(c("non_outlier", "outlier")[(seq_len(n) %in% outliers) + 1])
   
   
-  if(dims[2L] == 1) {
+  if(d == 1) {
     #data <-dplyr::mutate(data, index = rep(0, n))
     data$index <- 0
     out_display <- ggplot(data) +
@@ -41,7 +40,7 @@ display_HDoutliers <- function(data, outliers) {
      ylab("")+
      theme(axis.text.y=element_blank(), axis.ticks.y=element_blank())
     out_display
-  } else if (dims[2L] == 2) {
+  } else if (d == 2) {
     out_display <- ggplot(data) +
       geom_point(aes_string(x = data[,1], y= data[,2], colour = "outcon")) +
       scale_colour_manual(name = "Type", values = c("outlier" = "red", "non_outlier"= "black"))+
@@ -50,7 +49,7 @@ display_HDoutliers <- function(data, outliers) {
     out_display
   } else {
     #col <- ifelse(1:n %in% outliers, "red", "black")
-    col <- c("black", "red")[(seq_len(dims[1L]) %in% outliers) + 1]
+    col <- c("black", "red")[(seq_len(n) %in% outliers) + 1]
     tourr::animate_xy(data[,-(d+1)], col=col, pch = 20)
   }
 }
