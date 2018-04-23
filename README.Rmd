@@ -2,7 +2,7 @@
 output: github_document
 ---
 
-# This is a light-weight fork, without (most of the) dependencies and (most of the) loops for easy installation and testing
+# This is a light-weight fork, without (most of the) dependencies and (most of the) loops for easy installation and quick and dirty testing
 
 ---
 
@@ -52,7 +52,7 @@ You can install oddstream from github with:
 
 ```{r gh-installation, eval = FALSE}
 # install.packages("devtools")
-devtools::install_github("pridiltal/stray")
+devtools::install_github("DavidArenburg/stray")
 ```
 ## Example
 
