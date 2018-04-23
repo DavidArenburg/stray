@@ -4,9 +4,6 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 library(HDoutliers)
-library(stray)
-library(purrr)
-library(tidyverse)
 library(gridExtra)
 # install.packages("devtools")
 # devtools::install_github("pridiltal/stray")
