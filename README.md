@@ -1,3 +1,8 @@
+# This is a light-weight fork, without (most of the) dependencies and (most of the) loops for easy installation and quick and dirty testing
+
+### Installation (not really testes so far)
+devtools::install_github("DavidArenburg/stray")
+
 
 stray <img src="logo.png" align="right" height="150" />
 =======================================================
@@ -57,9 +62,9 @@ display_HDoutliers(data,outliers )
 set.seed(1234)
 n <- 1000 # number of observations
 nout <- 10 # number of outliers
-typical_data <- tibble::as.tibble(matrix(rnorm(2*n), ncol = 2, byrow = TRUE))
-out <- tibble::as.tibble(matrix(5*runif(2*nout,min=-5,max=5), ncol = 2, byrow = TRUE))
-data <- dplyr::bind_rows(out, typical_data )
+typical_data <- as.data.frame(matrix(rnorm(2*n), ncol = 2, byrow = TRUE))
+out <- as.data.frame(matrix(5*runif(2*nout, min = -5, max = 5), ncol = 2, byrow = TRUE))
+data <- rbind(out, typical_data)
 outliers <- find_HDoutliers(data)
 display_HDoutliers(data, outliers)
 ```
