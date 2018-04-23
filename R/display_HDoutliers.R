@@ -7,9 +7,7 @@
 #' @param outliers A vector of indexes of the observations determined to be
 #' outliers by \code{\link[stray]{find_HDoutliers}}
 #' @importFrom colorspace rainbow_hcl
-#' @importFrom dplyr mutate
 #' @importFrom animation saveGIF
-#' @importFrom dplyr as_tibble
 #' @importFrom ggplot2  ggplot geom_point scale_colour_manual xlab ylab theme
 #' @importFrom tourr animate_xy
 #' @export
@@ -21,15 +19,21 @@
 #' data <- rbind(flea[,-7], outpoints)
 #' outliers <- find_HDoutliers(data)
 #' display_HDoutliers(data, outliers)}
+
 display_HDoutliers <- function(data, outliers) {
   data <- as.data.frame(data)
-  d <- ncol(data)
-  n <- nrow(data)
-  outcon <- as.factor(ifelse(1:n %in% outliers,
-                             "outlier", "non_outlier"))
-  data <-dplyr::mutate(data, outcon)
-  if(d == 1) {
-    data <-dplyr::mutate(data, index = rep(0, n))
+  #d <- ncol(data)
+  #n <- nrow(data)
+  #outcon <- as.factor(ifelse(1:n %in% outliers,
+  #                           "outlier", "non_outlier"))
+  #data <-dplyr::mutate(data, outcon)
+  dims <- dim(data)
+  data$outcon <- as.factor(c("non_outlier", "outlier")[(seq_len(dims[1L]) %in% outliers) + 1])
+  
+  
+  if(dims[2L] == 1) {
+    #data <-dplyr::mutate(data, index = rep(0, n))
+    data$index <- 0
     out_display <- ggplot(data) +
      geom_point(aes_string(x = data[,1], y= data[,3], colour = data[,2])) +
      scale_colour_manual(name = "Type", values = c("outlier" = "red", "non_outlier"= "black"))+
@@ -37,7 +41,7 @@ display_HDoutliers <- function(data, outliers) {
      ylab("")+
      theme(axis.text.y=element_blank(), axis.ticks.y=element_blank())
     out_display
-  } else if (d == 2) {
+  } else if (dims[2L] == 2) {
     out_display <- ggplot(data) +
       geom_point(aes_string(x = data[,1], y= data[,2], colour = "outcon")) +
       scale_colour_manual(name = "Type", values = c("outlier" = "red", "non_outlier"= "black"))+
@@ -45,7 +49,8 @@ display_HDoutliers <- function(data, outliers) {
       ylab("Variable 2")
     out_display
   } else {
-    col <- ifelse(1:n %in% outliers, "red", "black")
+    #col <- ifelse(1:n %in% outliers, "red", "black")
+    col <- c("black", "red")[(seq_len(dims[1L]) %in% outliers) + 1]
     tourr::animate_xy(data[,-(d+1)], col=col, pch = 20)
   }
 }
